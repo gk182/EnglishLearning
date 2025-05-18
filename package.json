@@ -1,0 +1,22 @@
+{
+  "name": "english-learning-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "sass": "^1.88.0"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.7",
+    "bootstrap": "^5.3.6",
+    "react-icons": "^5.5.0"
+  }
+}
