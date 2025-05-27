@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { checkGrammar } from '../services/grammarService.js'; // import service gọi API
 
 export default function CheckGrammarPage() {
   const [text, setText] = useState('');
@@ -7,24 +8,20 @@ export default function CheckGrammarPage() {
   const [error, setError] = useState('');
 
   const handleCheckGrammar = async () => {
-    if (!text.trim()) return alert('Please enter the text to check.');
+    if (!text.trim()) {
+      alert('Please enter the text to check.');
+      return;
+    }
 
     setLoading(true);
     setError('');
     setResult(null);
 
     try {
-      // Giả lập gọi API, thay bằng API thật khi có
-      await new Promise((r) => setTimeout(r, 1500));
-
-      // Giả lập kết quả kiểm tra
-      const fakeResult = {
-        correctedText: text.replace(/teh/g, 'the'),
-        errors: [{ word: 'teh', message: 'Spelling wrong, should be "the"' }],
-      };
-
-      setResult(fakeResult);
-    } catch {
+      const response = await checkGrammar(text);
+      setResult(response.data);
+    } catch (err) {
+      console.error(err);
       setError('Có lỗi xảy ra khi kiểm tra ngữ pháp.');
     } finally {
       setLoading(false);
@@ -59,7 +56,7 @@ export default function CheckGrammarPage() {
           <h2 className="text-xl font-semibold mb-2">Results of editing:</h2>
           <p className="mb-4 whitespace-pre-wrap">{result.correctedText}</p>
 
-          {result.errors.length > 0 ? (
+          {result.errors && result.errors.length > 0 ? (
             <>
               <h3 className="font-semibold mb-1">Error found:</h3>
               <ul className="list-disc list-inside text-red-700">
