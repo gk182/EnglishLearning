@@ -110,7 +110,6 @@ export default function Footer() {
         <div className="flex gap-4 mt-2 md:mt-0">
           <a href="#" className="hover:text-indigo-700">Privacy policy</a>
           <a href="#" className="hover:text-indigo-700">Terms & conditions</a>
-          <span>Distributed by ThemeWagon</span>
         </div>
       </div>
     </footer>
