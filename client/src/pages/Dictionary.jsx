@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { FaSearch } from 'react-icons/fa';
+import { FaSearch } from "react-icons/fa";
+import { fetchDictionary } from "../services/dictionaryService.js"; // import service
 
 export default function Dictionary() {
   const [word, setWord] = useState("");
@@ -10,27 +11,24 @@ export default function Dictionary() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!word.trim()) return;
+
     setLoading(true);
     setError("");
     setData(null);
+
     try {
-      const res = await fetch(
-        `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`
-      );
-      const json = await res.json();
-      if (res.ok) setData(json[0]);
-      else setError("Unable to find words");
+      const result = await fetchDictionary(word);
+      setData(result);
     } catch (err) {
-      setError("Lỗi khi gọi API");
+      setError(err.message || "Lỗi khi gọi API");
     }
+
     setLoading(false);
   };
 
   return (
     <div className="container mx-auto p-6 max-w-3xl">
-      <h1 className="text-3xl font-bold mb-6 text-center">
-        Look up dictionary
-      </h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">Look up dictionary</h1>
 
       <form onSubmit={handleSubmit} className="flex gap-4 mb-6">
         <input
@@ -56,24 +54,23 @@ export default function Dictionary() {
         <div className="bg-white shadow-md rounded p-6">
           <h2 className="text-2xl font-semibold mb-2">{data.word}</h2>
 
-          {/* Phonetics */}
           <div className="flex flex-wrap gap-3 mb-6">
-            {(data.phonetics || []).map((phon, i) =>
-              phon.audio ? (
-                <button
-                  key={i}
-                  onClick={() => new Audio(phon.audio).play()}
-                  className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition"
-                  type="button"
-                  aria-label={`Phát âm ${phon.text || "audio"}`}
-                >
-                  {phon.text || "🔊"}
-                </button>
-              ) : null
+            {(data.phonetics || []).map(
+              (phon, i) =>
+                phon.audio && (
+                  <button
+                    key={i}
+                    onClick={() => new Audio(phon.audio).play()}
+                    className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition"
+                    type="button"
+                    aria-label={`Phát âm ${phon.text || "audio"}`}
+                  >
+                    {phon.text || "🔊"}
+                  </button>
+                )
             )}
           </div>
 
-          {/* Definitions */}
           <div>
             {data.meanings.map((meaning, idx) => (
               <div key={idx} className="mb-6">
