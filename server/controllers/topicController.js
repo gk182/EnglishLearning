@@ -25,7 +25,7 @@ export const getTopicById = async (req, res) => {
 }
 
 export const createTopic = async (req, res) => {
-  const { error } = topicValidation(req.body);
+  const { error } = topicValidation.validate(req.body, { abortEarly: false });
   if (error) {
     return res.status(400).json({ message: error.details[0].message });
   }
@@ -53,7 +53,7 @@ export const createTopic = async (req, res) => {
 };
 
 export const updateTopic = async (req, res) => {
-  const { error } = topicValidation(req.body);
+  const { error } = topicValidation.validate(req.body, { abortEarly: false });
   if (error) {
     return res.status(400).json({ message: error.details[0].message });
   }

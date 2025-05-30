@@ -1,4 +1,5 @@
 import Lesson from "../models/Lesson.js";
+import Topic from "../models/Topic.js";
 import { lessonValidation } from "../validation/lesson.js";
 import cloudinary from "./configs/cloudinaryConfig.js";
 import fs from "fs";
@@ -25,29 +26,54 @@ export const getAllLessons = async (req, res) => {
 };
 
 export const createLesson = async (req, res) => {
-  const { error } = lessonValidation(req.body);
-  if (error) {
-    return res.status(400).json({ message: error.details[0].message });
-  }
+  const { title, topic } = req.body;
+  const texts = Array.isArray(req.body.texts)
+    ? req.body.texts
+    : [req.body.texts];
   try {
-    let url = "";
-    let IDpublic = "";
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        resource_type: "video", // Cloudinary treats audio as 'video'
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No audio files uploaded" });
+    }
+    if (texts.length !== req.files.length) {
+      return res
+        .status(400)
+        .json({ message: "Số lượng audio và text không khớp" });
+    }
+    const scripts = [];
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+      const result = await cloudinary.uploader.upload(file.path, {
+        resource_type: "video",
         folder: "lesson/audio",
       });
-        url = result.secure_url;
-        IDpublic = result.public_id;
-        fs.existsSync(req.file.path) && fs.unlinkSync(req.file.path);
-
+      scripts.push({
+        audioUrl: result.secure_url,
+        public_id: result.public_id,
+        text: texts[i],
+      });
+      fs.existsSync(file.path) && fs.unlinkSync(file.path);
     }
     const newLesson = new Lesson({
-        ...req.body,
-        audioUrl: url || req.body.audio,
-        public_id: IDpublic, // nếu có audio thì lấy audio mới, không thì lấy audio cũ (nếu có)
+      title,
+      topic,
+      scripts,
     });
     await newLesson.save();
+
+    const updateTopic = await Topic.findByIdAndUpdate(
+      newLesson.topic,
+      {
+        $addToSet: {
+          lessons: newLesson._id,
+        },
+      }
+    );
+
+    if (!updateTopic) {
+      return res.status(404).json({
+        message: "update Topic not succesful",
+      });
+    }
     res.status(201).json(newLesson);
   } catch (error) {
     res.status(500).json({ message: "Error creating lesson", error });
@@ -55,39 +81,61 @@ export const createLesson = async (req, res) => {
 };
 
 export const updateLesson = async (req, res) => {
-  const { error } = lessonValidation(req.body);
-  if (error) {
-    return res.status(400).json({ message: error.details[0].message });
-  }
+  const { title, topic } = req.body;
+  // texts có thể là mảng hoặc string (nếu chỉ 1 text)
+  const texts = Array.isArray(req.body.texts)
+    ? req.body.texts
+    : [req.body.texts];
+
   try {
     const lessonId = req.params.id;
     const lesson = await Lesson.findById(lessonId);
     if (!lesson) {
       return res.status(404).json({ message: "Lesson not found" });
     }
-    let audioUrl = lesson.audioUrl;
-    let public_id = lesson.public_id;
-    if (req.file) {
-      if (public_id) {
-        await cloudinary.uploader.destroy(public_id, { resource_type: "video" });
+
+    let scripts = [];
+
+    // Nếu có file audio mới gửi lên
+    if (req.files && req.files.length > 0) {
+      if (texts.length !== req.files.length) {
+        return res
+          .status(400)
+          .json({ message: "Số lượng audio và text không khớp" });
       }
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        resource_type: "video", // Cloudinary xử lý audio như video
-        folder: "lesson/audio",
-      });
-      audioUrl = result.secure_url;
-      public_id = result.public_id;
-      fs.existsSync(req.file.path) && fs.unlinkSync(req.file.path);
+      // Xóa audio cũ trên cloudinary
+      for (const script of lesson.scripts) {
+        if (script.public_id) {
+          await cloudinary.uploader.destroy(script.public_id, {
+            resource_type: "video",
+          });
+        }
+      }
+      // Upload audio mới và ghép với text mới
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        const result = await cloudinary.uploader.upload(file.path, {
+          resource_type: "video",
+          folder: "lesson/audio",
+        });
+        scripts.push({
+          audioUrl: result.secure_url,
+          public_id: result.public_id,
+          text: texts[i],
+        });
+        fs.existsSync(file.path) && fs.unlinkSync(file.path);
+      }
+    } else {
+      // Không upload audio mới, giữ lại scripts cũ hoặc cập nhật text nếu cần
+      scripts = lesson.scripts;
     }
-    const updatedData = {
-      ...req.body,
-      audioUrl,
-      public_id,
-    };
-    const updatedLesson = await Lesson.findByIdAndUpdate(lessonId, updatedData, {
-      new: true,
-    });
-    res.status(200).json(updatedLesson);
+
+    lesson.title = title || lesson.title;
+    lesson.topic = topic || lesson.topic;
+    lesson.scripts = scripts;
+
+    await lesson.save();
+    res.status(200).json(lesson);
   } catch (error) {
     res.status(500).json({ message: "Error updating lesson", error });
   }
@@ -100,8 +148,15 @@ export const deleteLesson = async (req, res) => {
     if (!lesson) {
       return res.status(404).json({ message: "Lesson not found" });
     }
-    if (lesson.public_id) {
-      await cloudinary.uploader.destroy(lesson.public_id, { resource_type: "video" });
+    // Xóa toàn bộ audio trên cloudinary nếu có
+    if (lesson.scripts && lesson.scripts.length > 0) {
+      for (const script of lesson.scripts) {
+        if (script.public_id) {
+          await cloudinary.uploader.destroy(script.public_id, {
+            resource_type: "video",
+          });
+        }
+      }
     }
     await Lesson.findByIdAndDelete(lessonId);
     res.status(200).json({ message: "Lesson deleted successfully" });
@@ -109,4 +164,3 @@ export const deleteLesson = async (req, res) => {
     res.status(500).json({ message: "Error deleting lesson", error });
   }
 };
-

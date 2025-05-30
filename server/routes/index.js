@@ -3,7 +3,6 @@ import routerAuth from "./auth.js";
 import routerGrammar from "./grammar.js";
 import routerTopic from "./topic.js";
 import routerLesson from "./lesson.js"
-import routerUpload from "./upload.js"
 const router = express.Router();
 
 router.use('/auth', routerAuth);

@@ -8,8 +8,8 @@ const router = express.Router();
 router.get('/', getAllLessons);
 router.get('/:id', getLessonById);
 
-router.post('/',checkPermission, uploadAudio.single("audio"), createLesson);
-router.put('/:id',checkPermission, uploadAudio.single("audio"), updateLesson);
+router.post('/', checkPermission, uploadAudio.array("audio"), createLesson);
+router.put('/:id', checkPermission, uploadAudio.array("audio"), updateLesson);
 router.delete('/:id',checkPermission, deleteLesson);
 
 
