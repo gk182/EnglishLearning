@@ -12,3 +12,12 @@ export const getAllTopics = async () => {
     throw error;
   }
 };
+export const getTopicById = async (id) => {
+  try {
+    const response = await axios.get(`${API}/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching topic with id ${id}:`, error);
+    throw error;
+  }
+};
