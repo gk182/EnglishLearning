@@ -50,10 +50,11 @@ header {
   z-index: 100;
 }
 
-main {
-  padding-top: 80px; /* đẩy main xuống dưới header */
+main.public-main {
+  padding-top: 80px;
   min-height: calc(100vh - 80px);
 }
+
 
 
 .btn-primary {
