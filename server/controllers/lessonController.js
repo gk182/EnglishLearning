@@ -79,7 +79,7 @@ export const createLesson = async (req, res) => {
 };
 
 export const updateLesson = async (req, res) => {
-  const { title, topic } = req.body;
+  const { title, topic: newTopicId } = req.body;
   const texts = Array.isArray(req.body.texts) ? req.body.texts : [req.body.texts];
   const audioUrls = Array.isArray(req.body.audioUrls) ? req.body.audioUrls : [req.body.audioUrls];
   const public_ids = Array.isArray(req.body.public_ids) ? req.body.public_ids : [req.body.public_ids];
@@ -91,12 +91,12 @@ export const updateLesson = async (req, res) => {
       return res.status(404).json({ message: "Lesson not found" });
     }
 
-    let scripts = [];
+    const oldTopicId = lesson.topic?.toString();
+    const scripts = [];
     let fileIdx = 0;
 
     for (let i = 0; i < texts.length; i++) {
       if (req.files && req.files[fileIdx] && req.files[fileIdx].fieldname === "audio") {
-        // Có file mới
         const file = req.files[fileIdx];
         const result = await cloudinary.uploader.upload(file.path, {
           resource_type: "video",
@@ -110,7 +110,6 @@ export const updateLesson = async (req, res) => {
         fs.existsSync(file.path) && fs.unlinkSync(file.path);
         fileIdx++;
       } else {
-        // Không có file mới, giữ nguyên audioUrl/public_id cũ
         scripts.push({
           audioUrl: audioUrls[i],
           public_id: public_ids[i],
@@ -119,8 +118,22 @@ export const updateLesson = async (req, res) => {
       }
     }
 
+    // Nếu topic thay đổi
+    if (oldTopicId && newTopicId && oldTopicId !== newTopicId) {
+      // Xóa lesson khỏi topic cũ
+      await Topic.findByIdAndUpdate(oldTopicId, {
+        $pull: { lessons: lesson._id },
+      });
+
+      // Thêm lesson vào topic mới
+      await Topic.findByIdAndUpdate(newTopicId, {
+        $addToSet: { lessons: lesson._id },
+      });
+    }
+
+    // Cập nhật thông tin lesson
     lesson.title = title || lesson.title;
-    lesson.topic = topic || lesson.topic;
+    lesson.topic = newTopicId || lesson.topic;
     lesson.scripts = scripts;
     await lesson.save();
 
@@ -129,6 +142,7 @@ export const updateLesson = async (req, res) => {
     res.status(500).json({ message: "Error updating lesson", error });
   }
 };
+
 
 export const deleteLesson = async (req, res) => {
   try {
