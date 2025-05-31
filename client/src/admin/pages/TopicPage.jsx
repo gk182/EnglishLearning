@@ -1,4 +1,3 @@
-// src/pages/admin/TopicPage.jsx
 import { useEffect, useState } from 'react';
 import {
   getAllTopics,
@@ -6,10 +5,14 @@ import {
   updateTopic,
   deleteTopic,
 } from '../services/topicService';
+import TopicModal from '../components/TopicModal';
+
+// Modal component
+<TopicModal/>
 
 export default function TopicPage() {
   const [topics, setTopics] = useState([]);
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ title: '', levels: '', image: null });
   const [editingId, setEditingId] = useState(null);
 
@@ -22,13 +25,26 @@ export default function TopicPage() {
     fetchTopics();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === 'image') {
-      setForm({ ...form, image: files[0] });
-    } else {
-      setForm({ ...form, [name]: value });
-    }
+  const openAddModal = () => {
+    setShowModal(true);
+    setEditingId(null);
+    setForm({ title: '', levels: '', image: null });
+  };
+
+  const openEditModal = (topic) => {
+    setEditingId(topic._id);
+    setForm({
+      title: topic.title,
+      levels: topic.levels,
+      image: null,
+    });
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingId(null);
+    setForm({ title: '', levels: '', image: null });
   };
 
   const handleSubmit = async (e) => {
@@ -43,21 +59,8 @@ export default function TopicPage() {
     } else {
       await createTopic(formData);
     }
-
-    setShowForm(false);
-    setEditingId(null);
-    setForm({ title: '', levels: '', image: null });
+    closeModal();
     fetchTopics();
-  };
-
-  const handleEdit = (topic) => {
-    setEditingId(topic._id);
-    setForm({
-      title: topic.title,
-      levels: topic.levels,
-      image: null,
-    });
-    setShowForm(true);
   };
 
   const handleDelete = async (id) => {
@@ -74,72 +77,19 @@ export default function TopicPage() {
 
         <button
           className="mb-6 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-          onClick={() => {
-            setShowForm(true);
-            setEditingId(null);
-            setForm({ title: '', levels: '', image: null });
-          }}
+          onClick={openAddModal}
         >
           + Thêm mới
         </button>
 
-        {showForm && (
-          <form
-            onSubmit={handleSubmit}
-            encType="multipart/form-data"
-            className="bg-white p-6 rounded-lg shadow-md mb-8"
-          >
-            <div className="mb-4">
-              <label className="block font-medium mb-1">Tên chủ đề</label>
-              <input
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block font-medium mb-1">Cấp độ</label>
-              <input
-                name="levels"
-                value={form.levels}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block font-medium mb-1">Ảnh đại diện</label>
-              <input
-                name="image"
-                type="file"
-                accept="image/*"
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-              >
-                {editingId ? 'Cập nhật' : 'Thêm'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingId(null);
-                  setForm({ title: '', levels: '', image: null });
-                }}
-                className="px-5 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
-              >
-                Huỷ
-              </button>
-            </div>
-          </form>
-        )}
+        <TopicModal
+          open={showModal}
+          onClose={closeModal}
+          onSubmit={handleSubmit}
+          form={form}
+          setForm={setForm}
+          editing={!!editingId}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {topics.map((topic) => (
@@ -162,7 +112,7 @@ export default function TopicPage() {
               </div>
               <div className="flex flex-col gap-2 items-end">
                 <button
-                  onClick={() => handleEdit(topic)}
+                  onClick={() => openEditModal(topic)}
                   className="text-indigo-600 hover:underline"
                 >
                   Sửa

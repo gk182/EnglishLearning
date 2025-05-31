@@ -18,27 +18,21 @@ export default function Sidebar() {
       <nav className="flex flex-col gap-2 p-4">
         <Link
           to="/admin"
-          className="hover:bg-white/10 p-2 rounded transition-colors"
+          className="hover:bg-white/50 hover:text-indigo-700 p-2 rounded transition-colors"
         >
           Dashboard
         </Link>
         <Link
           to="/admin/topics"
-          className="hover:bg-white/10 p-2 rounded transition-colors"
+          className="hover:bg-white/50 hover:text-indigo-700 p-2 rounded transition-colors"
         >
           Topics
         </Link>
         <Link
           to="/admin/lessons"
-          className="hover:bg-white/10 p-2 rounded transition-colors"
+          className="hover:bg-white/50 hover:text-indigo-700 p-2 rounded transition-colors"
         >
           Lessons
-        </Link>
-        <Link
-          to="/admin/users"
-          className="hover:bg-white/10 p-2 rounded transition-colors"
-        >
-          Users
         </Link>
       </nav>
 
