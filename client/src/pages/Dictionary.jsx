@@ -28,7 +28,9 @@ export default function Dictionary() {
 
   return (
     <div className="container mx-auto p-6 max-w-3xl">
-      <h1 className="text-3xl font-bold mb-6 text-center">Look up dictionary</h1>
+      <h1 className="text-3xl font-semibold mb-6 text-center text-indigo-700">
+        Look up dictionary
+      </h1>
 
       <form onSubmit={handleSubmit} className="flex gap-4 mb-6">
         <input
