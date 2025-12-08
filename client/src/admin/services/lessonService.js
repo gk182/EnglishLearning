@@ -1,4 +1,4 @@
-import axios from "axios";
+import axiosClient from "../api/axiosClient";
 
 const token = localStorage.getItem('token'); // hoặc nơi bạn lưu token
 const config = {
@@ -7,8 +7,8 @@ const config = {
   },
 };
 
-export const getAllLessons = () => axios.get("/api/lesson").then(res => res.data);
-export const getLessonById = (id) => axios.get(`/api/lesson/${id}`).then(res => res.data);
-export const createLesson = (data) => axios.post("/api/lesson", data,config);
-export const updateLesson = (id, data) => axios.put(`/api/lesson/${id}`, data,config);
-export const deleteLesson = (id) => axios.delete(`/api/lesson/${id}`,config);
+export const getAllLessons = () => axiosClient.get("/api/lesson").then(res => res.data);
+export const getLessonById = (id) => axiosClient.get(`/api/lesson/${id}`).then(res => res.data);
+export const createLesson = (data) => axiosClient.post("/api/lesson", data,config);
+export const updateLesson = (id, data) => axiosClient.put(`/api/lesson/${id}`, data,config);
+export const deleteLesson = (id) => axiosClient.delete(`/api/lesson/${id}`,config);

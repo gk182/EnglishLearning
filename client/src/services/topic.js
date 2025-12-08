@@ -1,11 +1,11 @@
 // services/topic.js
-import axios from "axios";
+import axiosClient from "../api/axiosClient";
 
 const API = "/api/topic";
 
 export const getAllTopics = async () => {
   try {
-    const response = await axios.get(API);
+    const response = await axiosClient.get(API);
     return response.data;
   } catch (error) {
     console.error("Error fetching topics from", API, ":", error);
@@ -14,7 +14,7 @@ export const getAllTopics = async () => {
 };
 export const getTopicById = async (id) => {
   try {
-    const response = await axios.get(`${API}/${id}`);
+    const response = await axiosClient.get(`${API}/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching topic with id ${id}:`, error);

@@ -1,7 +1,7 @@
-import axios from "axios";
+import axiosClient from "../api/axiosClient";
 
 const API = "/api/grammar/";
 export const checkGrammar = (text) => {
-  return axios.post(API, { text });
+  return axiosClient.post(API, { text });
 };
 
