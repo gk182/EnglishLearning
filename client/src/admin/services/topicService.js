@@ -1,4 +1,4 @@
-import axiosClient from "../../api/axiosClient,js";
+import axiosClient from "../../api/axiosClient.js";
 
 const token = localStorage.getItem('token'); // hoặc nơi bạn lưu token
 const config = {
