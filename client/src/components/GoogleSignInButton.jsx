@@ -1,5 +1,6 @@
 import { GoogleLogin } from "@react-oauth/google";
-import axios from "axios";
+import axiosClient from "../api/axiosClient";
+
 import { useNavigate } from "react-router-dom";
 
 export default function GoogleSignInButton({ setMessage }) {
@@ -7,7 +8,7 @@ export default function GoogleSignInButton({ setMessage }) {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const res = await axios.post("/api/auth/google", {
+      const res = await axiosClient.post("/api/auth/google", {
         token: credentialResponse.credential,
       });
 
