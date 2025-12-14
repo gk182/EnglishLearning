@@ -4,6 +4,8 @@ import { lessonValidation } from "../validation/lesson.js";
 import cloudinary from "./configs/cloudinaryConfig.js";
 import fs from "fs";
 
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const getLessonById = async (req, res) => {
   try {
     const lesson = await Lesson.findById(req.params.id).populate("topic");
@@ -44,7 +46,7 @@ export const createLesson = async (req, res) => {
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
       const result = await cloudinary.uploader.upload(file.path, {
-        resource_type: "video",
+        resource_type: "auto",
         folder: "lesson/audio",
       });
       scripts.push({
@@ -52,7 +54,12 @@ export const createLesson = async (req, res) => {
         public_id: result.public_id,
         text: texts[i],
       });
-      fs.existsSync(file.path) && fs.unlinkSync(file.path);
+      try {
+        await delay(1000);
+        fs.existsSync(file.path) && fs.unlinkSync(file.path);
+      } catch (e) {
+        console.error("Error deleting temp file:", e.message);
+      }
     }
     const newLesson = new Lesson({
       title,
@@ -74,6 +81,7 @@ export const createLesson = async (req, res) => {
     }
     res.status(201).json(newLesson);
   } catch (error) {
+    console.error("Create Lesson Error:", error);
     res.status(500).json({ message: "Error creating lesson", error });
   }
 };
@@ -99,7 +107,7 @@ export const updateLesson = async (req, res) => {
       if (req.files && req.files[fileIdx] && req.files[fileIdx].fieldname === "audio") {
         const file = req.files[fileIdx];
         const result = await cloudinary.uploader.upload(file.path, {
-          resource_type: "video",
+          resource_type: "auto",
           folder: "lesson/audio",
         });
         scripts.push({
@@ -107,7 +115,12 @@ export const updateLesson = async (req, res) => {
           public_id: result.public_id,
           text: texts[i],
         });
-        fs.existsSync(file.path) && fs.unlinkSync(file.path);
+        try {
+          await delay(1000);
+          fs.existsSync(file.path) && fs.unlinkSync(file.path);
+        } catch (e) {
+          console.error("Error deleting temp file:", e.message);
+        }
         fileIdx++;
       } else {
         scripts.push({
@@ -139,6 +152,7 @@ export const updateLesson = async (req, res) => {
 
     res.status(200).json(lesson);
   } catch (error) {
+    console.error("Update Lesson Error:", error);
     res.status(500).json({ message: "Error updating lesson", error });
   }
 };
@@ -155,9 +169,14 @@ export const deleteLesson = async (req, res) => {
     if (lesson.scripts && lesson.scripts.length > 0) {
       for (const script of lesson.scripts) {
         if (script.public_id) {
-          await cloudinary.uploader.destroy(script.public_id, {
+          // Thử xóa dưới dạng video (audio thường được tính là video)
+          const result = await cloudinary.uploader.destroy(script.public_id, {
             resource_type: "video",
           });
+          // Nếu không tìm thấy (ví dụ nó là ảnh), thử xóa dưới dạng image (mặc định)
+          if (result.result === "not found") {
+             await cloudinary.uploader.destroy(script.public_id);
+          }
         }
       }
     }

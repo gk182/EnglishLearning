@@ -3,6 +3,8 @@ import { topicValidation } from "../validation/topic.js";
 import cloudinary from "./configs/cloudinaryConfig.js";
 import fs from "fs";
 
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const getAllTopics = async (req, res) => {
   try {
     const topics = await Topic.find();
@@ -37,8 +39,13 @@ export const createTopic = async (req, res) => {
         folder: "topics/images",
       });
       url = result.secure_url;
-      IDpublic = result.public_id,
-      fs.existsSync(req.file.path) && fs.unlinkSync(req.file.path);
+      IDpublic = result.public_id;
+      try {
+        await delay(1000);
+        fs.existsSync(req.file.path) && fs.unlinkSync(req.file.path);
+      } catch (e) {
+        console.error("Error deleting temp file:", e.message);
+      }
     }
     const newTopic = new Topic({
       ...req.body,
@@ -74,7 +81,12 @@ export const updateTopic = async (req, res) => {
       });
       imgUrl = result.secure_url;
       public_id = result.public_id;
-      fs.existsSync(req.file.path) && fs.unlinkSync(req.file.path);
+      try {
+        await delay(1000);
+        fs.existsSync(req.file.path) && fs.unlinkSync(req.file.path);
+      } catch (e) {
+        console.error("Error deleting temp file:", e.message);
+      }
     }
     const updatedData = {
       ...req.body,

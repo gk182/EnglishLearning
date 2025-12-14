@@ -7,9 +7,10 @@ const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const axiosClient = axios.create({
     baseURL: baseURL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+    // NOTE: không ép Content-Type ở đây — để axios/浏览器 tự set đúng (multipart boundary khi dùng FormData)
+    // headers: {
+    //     'Content-Type': 'application/json',
+    // },
 });
 
 export default axiosClient;
